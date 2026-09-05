@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DXB5 Replenishment Command Center | Amazon</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+    --amazon-navy: #131921;
+    --amazon-navy-light: #232f3e;
+    --amazon-orange: #ff9900;
+    --amazon-orange-dark: #e88b00;
+    --bg: #eef1f5;
+    --card-radius: 12px;
+    --shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: #172033;
+}
+
+header {
+    background: linear-gradient(135deg, var(--amazon-navy) 0%, var(--amazon-navy-light) 100%);
+    color: white;
+    padding: 16px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 4px solid var(--amazon-orange);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-logo {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.brand-logo .smile {
+    color: var(--amazon-orange);
+}
+
+.brand-sub {
+    font-size: 12px;
+    color: #c7ccd1;
+    line-height: 1.3;
+}
+
+.brand-sub b {
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.role-switch { display: flex; gap: 8px; align-items: center; }
+.role-btn {
+    padding: 9px 18px;
+    border-radius: 22px;
+    border: 2px solid var(--amazon-orange);
+    background: transparent;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.15s ease;
+}
+.role-btn:hover { background: rgba(255,153,0,0.15); }
+.role-btn.active { background: var(--amazon-orange); color: var(--amazon-navy); border-color: var(--amazon-orange); }
+
+.clock {
+    font-size: 18px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.08);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.container { padding: 24px; max-width: 1600px; margin: auto; }
+
+/* Upload */
+.upload-box {
+    background: white;
+    padding: 22px 24px;
+    border-radius: var(--card-radius);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--amazon-navy);
+}
+.upload-box h2 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    color: var(--amazon-navy);
+}
+.upload-box p { color: #556; font-size: 13px; margin: 0 0 14px; }
+
+input[type="file"] {
+    padding: 9px;
+    border: 1px solid #d5dbe3;
+    border-radius: 7px;
+    background: #fafbfc;
+}
+
+button {
+    border: none;
+    border-radius: 7px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.2px;
+    transition: transform 0.05s ease, opacity 0.15s ease;
+}
+button:hover { opacity: 0.92; }
+button:active { transform: scale(0.98); }
+
+.upload-btn { background: var(--amazon-orange); color: var(--amazon-navy); margin-left: 10px; }
+.clear-btn { background: #6b7685; color: white; margin-left: 8px; }
+.download-btn { background: #1a7a3c; color: white; margin-left: 8px; }
+
+#fileStatus { color: var(--amazon-navy); font-weight: 600; font-size: 13px; margin-top: 10px; }
+
+/* Statistics */
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    border-left: 5px solid #d5dbe3;
+}
+.stat-card h3 { margin: 0 0 8px; font-size: 12px; color: #667085; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-number { font-size: 32px; font-weight: 800; color: var(--amazon-navy); }
+.stat-card:nth-child(1) { border-left-color: #d32f2f; }
+.stat-card:nth-child(2) { border-left-color: #e88b00; }
+.stat-card:nth-child(3) { border-left-color: #2c6ecb; }
+.stat-card:nth-child(4) { border-left-color: #b71c1c; }
+.stat-card:nth-child(5) { border-left-color: #1a7a3c; }
+
+/* Controls */
+.controls {
+    background: white;
+    padding: 14px 16px;
+    border-radius: var(--card-radius);
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+}
+.controls input, .controls select {
+    padding: 10px 12px;
+    border: 1px solid #d5dbe3;
+    border-radius: 7px;
+    font-size: 13px;
+    min-width: 220px;
+}
+.controls input:focus, .controls select:focus { outline: 2px solid var(--amazon-orange); border-color: var(--amazon-orange); }
+
+/* Table */
+.table-container { background: white; border-radius: var(--card-radius); overflow-x: auto; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; }
+th {
+    background: var(--amazon-navy);
+    color: white;
+    padding: 13px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    position: sticky;
+    top: 0;
+}
+td { padding: 12px 13px; border-top: 1px solid #eef0f3; font-size: 13.5px; }
+tbody tr:hover { background: #f7f9fc; }
+
+tr.urgent { background: #fff0f0; }
+tr.soon { background: #fff8e5; }
+tr.upcoming { background: #f4f8ff; }
+tr.overdue { background: #ffdede; }
+tr.completed { background: #eaf8ed; }
+tr.missing { background: #f1e6ff; }
+tr.shortage { background: #fff1de; }
+
+.badge {
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.badge-urgent { background: #ffb3b3; color: #8a0000; }
+.badge-soon { background: #ffe0a3; color: #744b00; }
+.badge-upcoming { background: #cfe0ff; color: #17468a; }
+.badge-overdue { background: #ff6b6b; color: white; }
+.badge-completed { background: #a9dfb1; color: #145c20; }
+.badge-missing { background: #d9c7ff; color: #4a1f8a; }
+.badge-shortage { background: #ffcf99; color: #7a3d00; }
+
+.pick-btn { background: #1a7a3c; color: white; }
+.pick-btn:hover { background: #135c2c; }
+.undo-btn { background: #6b7685; color: white; }
+
+.empty { text-align: center; padding: 55px 20px; color: #8a94a3; font-size: 14px; }
+
+/* Picker login */
+.picker-login {
+    background: white;
+    padding: 34px 28px;
+    border-radius: var(--card-radius);
+    margin: 40px auto;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border-top: 5px solid var(--amazon-orange);
+}
+.picker-login p { font-size: 16px; color: var(--amazon-navy); margin-bottom: 16px; }
+.picker-login input {
+    padding: 13px;
+    font-size: 16px;
+    border: 1px solid #d5dbe3;
+    border-radius: 8px;
+    width: 240px;
+    text-align: center;
+}
+.picker-login button {
+    padding: 13px 20px;
+    font-size: 14px;
+    margin-left: 8px;
+    background: var(--amazon-orange);
+    color: var(--amazon-navy);
+}
+
+.picker-active-user {
+    background: var(--amazon-navy);
+    color: white;
+    font-weight: 700;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 14px;
+}
+.picker-active-user b { color: var(--amazon-orange); }
+.picker-active-user button { margin-left: 10px; background: #6b7685; color: white; padding: 6px 12px; font-size: 12px; }
+
+.picker-single-wrap { max-width: 440px; margin: 0 auto; }
+
+.shortage-tally {
+    background: #fff3e0;
+    color: #7a3d00;
+    font-weight: 700;
+    text-align: center;
+    padding: 11px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    border: 1px solid #ffcf99;
+}
+
+.picker-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    background: white;
+    padding: 13px 18px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+.nav-btn { background: var(--amazon-navy); color: white; padding: 10px 20px; }
+.nav-btn:hover { background: var(--amazon-navy-light); }
+#pickerPosition { font-weight: 800; color: var(--amazon-navy); font-size: 14px; }
+
+.picker-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border-left: 8px solid #cfe0ff;
+}
+.picker-card.urgent { border-left-color: #ff4d4d; }
+.picker-card.soon { border-left-color: #ffb020; }
+.picker-card.upcoming { border-left-color: #4d8dff; }
+.picker-card.overdue { border-left-color: #b30000; }
+.picker-card.completed { border-left-color: #2fa84f; opacity: 0.65; }
+.picker-card.missing { border-left-color: #7c3aed; opacity: 0.65; }
+.picker-card.shortage { border-left-color: #d97706; opacity: 0.65; }
+
+.picker-card .priority-tag { font-weight: 800; color: #8a94a3; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
+.picker-card .bin { font-size: 28px; font-weight: 800; margin: 12px 0 8px; color: var(--amazon-navy); }
+.picker-card .barcode { color: #667085; margin-bottom: 6px; font-size: 13px; }
+.picker-card .remaining { font-size: 22px; font-weight: 800; margin: 12px 0; color: var(--amazon-navy); }
+
+.picker-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.picker-actions button { width: 100%; padding: 16px; font-size: 16px; border-radius: 10px; }
+.picked-btn { background: #1a7a3c; color: white; }
+.picked-btn:hover { background: #135c2c; }
+.missing-btn { background: #7c3aed; color: white; }
+.missing-btn:hover { background: #5f2bc4; }
+.shortage-btn { background: #d97706; color: white; }
+.shortage-btn:hover { background: #b45f04; }
+
+.pax-barcode { display: block; margin: 12px auto 0; max-width: 100%; }
+
+/* Modal */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(19,25,33,0.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-box { background: white; padding: 28px; border-radius: 16px; max-width: 340px; width: 90%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.3); border-top: 5px solid var(--amazon-orange); }
+.modal-box h3 { margin-top: 0; color: var(--amazon-navy); }
+.modal-box input { width: 100%; padding: 13px; font-size: 18px; border: 1px solid #d5dbe3; border-radius: 8px; margin: 14px 0; text-align: center; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions button { flex: 1; padding: 13px; border-radius: 8px; }
+
+.hidden { display: none !important; }
+
+footer.fc-footer {
+    text-align: center;
+    color: #8a94a3;
+    font-size: 12px;
+    padding: 24px 0 10px;
+}
+
+/* Responsive */
+@media(max-width: 1000px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 600px) {
+    .stats { grid-template-columns: 1fr; }
+    header { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <div class="brand-logo">amazon<span class="smile">.</span></div>
+        <div class="brand-sub">
+            <b>DXB5 · Fulfillment Center</b><br>
+            Replenishment Command Center
+        </div>
+    </div>
+    <div class="role-switch">
+        <button class="role-btn active" id="adminBtn" onclick="switchRole('admin')">🛠 Admin</button>
+        <button class="role-btn" id="pickerBtn" onclick="switchRole('picker')">🧑‍🏭 Picker</button>
+    </div>
+    <div class="clock" id="clock">00:00:00</div>
+</header>
+
+<div class="container">
+
+    <!-- ================= ADMIN VIEW ================= -->
+    <div id="adminLockBox" class="picker-login hidden">
+        <p><b>🔒 Enter Admin PIN</b></p>
+        <input type="password" id="adminPinInput" placeholder="PIN" onkeydown="if(event.key==='Enter'){adminUnlock();}">
+        <button onclick="adminUnlock()">Unlock</button>
+    </div>
+
+    <div id="adminView" class="hidden">
+
+        <div class="upload-box">
+            <h2>Upload Replenishment File</h2>
+            <p>Upload any of the usual replenishment file formats — with or without headers, in any column order. The page auto-detects <b>PAX / scannableId</b>, <b>bin / outermostScannableId</b>, <b>barcode / asin</b>, <b>need-by date/time</b>, and an optional <b>quantity</b> column. Only <b>paX</b> tasks are loaded — <b>tsX</b> and <b>csX</b> rows are automatically skipped.</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+            <button class="upload-btn" onclick="loadFile()">📂 Load File</button>
+            <button class="clear-btn" onclick="clearAll()">🗑 Clear</button>
+            <button class="download-btn" onclick="downloadResults()">⬇ Download Results CSV</button>
+            <p id="fileStatus"></p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card"><h3>🔴 URGENT</h3><div class="stat-number" id="urgentCount">0</div></div>
+            <div class="stat-card"><h3>🟠 DUE SOON</h3><div class="stat-number" id="soonCount">0</div></div>
+            <div class="stat-card"><h3>🟡 UPCOMING</h3><div class="stat-number" id="upcomingCount">0</div></div>
+            <div class="stat-card"><h3>⚠️ OVERDUE</h3><div class="stat-number" id="overdueCount">0</div></div>
+            <div class="stat-card"><h3>✅ COMPLETED</h3><div class="stat-number" id="completedCount">0</div></div>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="search" placeholder="Search PAX / BIN / Barcode..." oninput="renderTable()">
+            <select id="statusFilter" onchange="renderTable()">
+                <option value="ALL">All Tasks</option>
+                <option value="URGENT">🔴 Urgent</option>
+                <option value="SOON">🟠 Due Soon</option>
+                <option value="UPCOMING">🟡 Upcoming</option>
+                <option value="OVERDUE">⚠️ Overdue</option>
+                <option value="COMPLETED">✅ Completed</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th><th>PAX ID</th><th>BIN LOCATION</th><th>BARCODE</th><th>QTY</th>
+                        <th>NEED BY</th><th>TIME REMAINING</th><th>STATUS</th><th>PICKED BY</th><th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="taskTable">
+                    <tr><td colspan="10" class="empty">Upload your replenishment file to begin.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- ================= PICKER VIEW ================= -->
+    <div id="pickerView" class="hidden">
+
+        <div class="picker-login" id="pickerLoginBox">
+            <p><b>Enter your name to start picking</b></p>
+            <input type="text" id="pickerNameInput" placeholder="Your name">
+            <button onclick="pickerLoginStart()">Start</button>
+        </div>
+
+        <div class="picker-single-wrap hidden" id="pickerMainArea">
+            <div class="picker-active-user">👤 Picking as: <b id="pickerActiveName"></b> &nbsp;
+                <button class="clear-btn" onclick="pickerSwitchUser()">Switch User</button>
+            </div>
+            <div class="shortage-tally">⚠️ Shortages logged: <span id="shortageTotal">0</span> units: <span id="shortageUnitsTotal">0</span></div>
+            <div id="pickerCards"></div>
+
+            <div class="picker-nav">
+                <button class="nav-btn" onclick="pickerPrev()">⬅ Prev</button>
+                <span id="pickerPosition">0 / 0</span>
+                <button class="nav-btn" onclick="pickerNext()">Next ➡</button>
+            </div>
+        </div>
+
+        <footer class="fc-footer">Amazon DXB5 Fulfillment Center &nbsp;·&nbsp; Replenishment Command Center &nbsp;·&nbsp; Internal Use Only</footer>
+
+</div>
+
+    <!-- ================= SHORTAGE MODAL ================= -->
+    <div id="shortageModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h3>⚠️ Report Shortage</h3>
+            <p>How many units are short for <b id="shortageModalBin"></b>?</p>
+            <input type="number" id="shortageQtyInput" min="1" placeholder="Units short">
+            <div class="modal-actions">
+                <button class="clear-btn" onclick="closeShortageModal()">Cancel</button>
+                <button class="shortage-btn" onclick="confirmShortage()">Confirm Shortage</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+/* ==========================================
+   SUPABASE SETUP
+========================================== */
+
+const SUPABASE_URL = "https://nrhjqsdvqspkofgavwge.supabase.co";
+const SUPABASE_KEY = "sb_publishable_55qdk2OiPxBqHnHhAx9V6g_-5sAgFv5";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let realtimeChannel = null;
+let supabaseSyncing = false;
+
+
+/* ==========================================
+   GLOBAL DATA
+========================================== */
+
+let tasks = [];
+let currentRole = "admin";
+let pickerIndex = 0;
+let pickerName = null;
+const ADMIN_PIN = "2468";
+let adminUnlocked = false;
+
+
+/* ==========================================
+   ROLE SWITCHING
+========================================== */
+
+function switchRole(role) {
+
+    currentRole = role;
+
+    document.getElementById("adminBtn").classList.toggle("active", role === "admin");
+    document.getElementById("pickerBtn").classList.toggle("active", role === "picker");
+
+    document.getElementById("pickerView").classList.toggle("hidden", role !== "picker");
+
+    if (role === "picker") {
+
+        document.getElementById("adminView").classList.add("hidden");
+        document.getElementById("adminLockBox").classList.add("hidden");
+
+        if (pickerName) {
+            showPickerMainArea();
+            renderPickerView();
+        } else {
+            showPickerLoginBox();
+        }
+
+    } else {
+
+        if (adminUnlocked) {
+            document.getElementById("adminView").classList.remove("hidden");
+            document.getElementById("adminLockBox").classList.add("hidden");
+            renderTable();
+        } else {
+            document.getElementById("adminView").classList.add("hidden");
+            document.getElementById("adminLockBox").classList.remove("hidden");
+            document.getElementById("adminPinInput").value = "";
+            document.getElementById("adminPinInput").focus();
+        }
+
+    }
+}
+
+
+function adminUnlock() {
+
+    const value = document.getElementById("adminPinInput").value.trim();
+
+    if (value === ADMIN_PIN) {
+
+        adminUnlocked = true;
+
+        document.getElementById("adminLockBox").classList.add("hidden");
+        document.getElementById("adminView").classList.remove("hidden");
+
+        renderTable();
+
+    } else {
+
+        alert("Incorrect PIN.");
+        document.getElementById("adminPinInput").value = "";
+        document.getElementById("adminPinInput").focus();
+
+    }
+}
+
+
+function showPickerLoginBox() {
+
+    document.getElementById("pickerLoginBox").classList.remove("hidden");
+    document.getElementById("pickerMainArea").classList.add("hidden");
+}
+
+
+function showPickerMainArea() {
+
+    document.getElementById("pickerLoginBox").classList.add("hidden");
+    document.getElementById("pickerMainArea").classList.remove("hidden");
+    document.getElementById("pickerActiveName").textContent = pickerName;
+}
+
+
+function pickerLoginStart() {
+
+    const value = document.getElementById("pickerNameInput").value.trim();
+
+    if (!value) {
+        alert("Please enter your name.");
+        return;
+    }
+
+    pickerName = value;
+    pickerIndex = 0;
+
+    showPickerMainArea();
+    renderPickerView();
+}
+
+
+function pickerSwitchUser() {
+
+    pickerName = null;
+
+    document.getElementById("pickerNameInput").value = "";
+
+    showPickerLoginBox();
+}
+
+
+/* ==========================================
+   LOAD FILE
+========================================== */
+
+function loadFile() {
+
+    const input = document.getElementById("fileInput");
+
+    if (!input.files.length) {
+        alert("Please select an Excel or CSV file.");
+        return;
+    }
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+
+        try {
+
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+
+            /*
+               Read as raw rows (array of arrays) instead of
+               assuming named headers. Different site exports
+               use different column sets/orders (some have a
+               header row, some don't; some add a quantity
+               column, etc.) — auto-detecting from cell content
+               works for all of them.
+            */
+
+            const rows = XLSX.utils.sheet_to_json(
+                worksheet,
+                { header: 1, defval: "" }
+            );
+
+            processRows(rows);
+
+            document.getElementById("fileStatus").innerHTML =
+                "✅ Loaded " + tasks.length + " tasks from <b>" + file.name + "</b>";
+
+        } catch(error) {
+            console.error(error);
+            alert("Could not read the file. Please check the Excel/CSV format.");
+        }
+
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+
+/* ==========================================
+   CLASSIFY A RAW CELL VALUE
+   Figures out what kind of field a cell holds
+   based on its shape, not its column position.
+========================================== */
+
+function classifyValue(value) {
+
+    if (value === null || value === undefined || value === "") {
+        return { type: "EMPTY", value: "" };
+    }
+
+    if (typeof value === "number") {
+
+        /*
+           Excel date/time serials for real dates in
+           this century are large (e.g. ~46000+ for
+           2026) or, if time-only, a fraction between
+           0 and 1. A small whole number like 1, 2, 3
+           is almost certainly a quantity, not a date —
+           check that first so quantities never get
+           misread as "1/1/1900"-style phantom dates.
+        */
+
+        if (Number.isInteger(value) && value >= 0 && value < 1000) {
+            return { type: "QTY", value: value };
+        }
+
+        if (value > 0 && value < 100000) {
+            return { type: "DATE", value: value };
+        }
+
+        return { type: "UNKNOWN", value: value };
+    }
+
+    const text = String(value).trim();
+
+    if (text === "") {
+        return { type: "EMPTY", value: "" };
+    }
+
+    /*
+       Bin / outermost scannable id: "P-5-A218B250",
+       "dz-P-50Deep-P2", etc.
+    */
+
+    if (/^(p-|dz-)/i.test(text)) {
+        return { type: "BIN", value: text };
+    }
+
+    /*
+       PAX scannable id: "paX35mr54wm"
+    */
+
+    if (/^pax/i.test(text)) {
+        return { type: "PAX", value: text };
+    }
+
+    /*
+       Other scanner types (tsX, csX, etc.) are not
+       PAX picks — flag them so the row gets skipped.
+    */
+
+    if (/^(tsx|csx)/i.test(text)) {
+        return { type: "NON_PAX", value: text };
+    }
+
+    /*
+       FcSKU-style container code, e.g. "ZZV5M711PC" —
+       some files identify the pick by this instead of
+       a paX id. Used as a fallback PAX identifier when
+       no real paX value is present on the row.
+    */
+
+    if (/^zz[a-z0-9]{6,15}$/i.test(text)) {
+        return { type: "FCSKU", value: text };
+    }
+
+    /*
+       Full date+time or date-only text, e.g.
+       "9/1/2026 23:15" or "9/1/2026"
+    */
+
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}(\s+\d{1,2}:\d{2})?/.test(text)) {
+        return { type: "DATE", value: text };
+    }
+
+    /*
+       Plain HH:MM time
+    */
+
+    if (/^\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i.test(text)) {
+        return { type: "DATE", value: text };
+    }
+
+    /*
+       Small plain integer -> quantity
+    */
+
+    if (/^\d{1,4}$/.test(text)) {
+        return { type: "QTY", value: parseInt(text) };
+    }
+
+    /*
+       Otherwise, treat as the barcode/ASIN
+       (alphanumeric product identifier).
+    */
+
+    if (/^[A-Za-z0-9]{6,20}$/.test(text)) {
+        return { type: "BARCODE", value: text };
+    }
+
+    return { type: "UNKNOWN", value: text };
+}
+
+
+/* ==========================================
+   LOOKS LIKE A HEADER ROW?
+========================================== */
+
+function looksLikeHeaderRow(row) {
+
+    const keywords = [
+        "pax", "bin", "asin", "barcode", "need", "pick",
+        "scannable", "time", "qty", "quantity", "location", "login"
+    ];
+
+    return row.some(cell => {
+
+        const text = String(cell).toLowerCase().trim();
+
+        return keywords.some(word => text.includes(word));
+
+    });
+}
+
+
+/* ==========================================
+   PROCESS RAW ROWS (auto-detect columns)
+========================================== */
+
+function processRows(rows) {
+
+    tasks = [];
+
+    if (!rows || rows.length === 0) {
+        renderTable();
+        return;
+    }
+
+    let startIndex = 0;
+
+    if (looksLikeHeaderRow(rows[0])) {
+        startIndex = 1;
+    }
+
+    /*
+       Merge rows that share the same PAX + bin +
+       barcode into a single task instead of creating
+       duplicate cards — their quantities add up, and
+       the earliest need-by time is kept.
+    */
+
+    const merged = new Map();
+
+    for (let r = startIndex; r < rows.length; r++) {
+
+        const row = rows[r];
+
+        if (!row || row.every(cell => cell === "" || cell === null || cell === undefined)) {
+            continue;
+        }
+
+        let pax = "";
+        let fcSku = "";
+        let bin = "";
+        let barcode = "";
+        let pickTime = "";
+        let qty = 1;
+        let isNonPax = false;
+
+        row.forEach(cell => {
+
+            const classified = classifyValue(cell);
+
+            switch(classified.type) {
+
+                case "PAX":
+                    if (!pax) { pax = classified.value; }
+                    break;
+
+                case "FCSKU":
+                    /*
+                       Fallback identifier used only if
+                       no real paX value is found on the
+                       row — some files identify picks by
+                       an FcSKU code instead.
+                    */
+                    if (!fcSku) { fcSku = classified.value; }
+                    break;
+
+                case "NON_PAX":
+                    /*
+                       tsX / csX rows are not PAX picks —
+                       skip loading this row into the admin
+                       task list entirely.
+                    */
+                    isNonPax = true;
+                    break;
+
+                case "BIN":
+                    if (!bin) { bin = classified.value; }
+                    break;
+
+                case "DATE":
+                    if (!pickTime) { pickTime = normalizeTime(classified.value); }
+                    break;
+
+                case "QTY":
+                    qty = classified.value;
+                    break;
+
+                case "BARCODE":
+                    if (!barcode) { barcode = classified.value; }
+                    break;
+
+            }
+
+        });
+
+        if (isNonPax) {
+            continue;
+        }
+
+        if (!pax) {
+            pax = fcSku;
+        }
+
+        if (!pax && !bin && !barcode && !pickTime) {
+            continue;
+        }
+
+        pax = String(pax).trim();
+        bin = String(bin).trim();
+        barcode = String(barcode).trim();
+
+        const key = pax + "|" + bin + "|" + barcode;
+
+        if (merged.has(key)) {
+
+            const existing = merged.get(key);
+
+            existing.qty += qty;
+
+            /*
+               Keep the earliest need-by time between
+               the duplicate rows.
+            */
+
+            const existingDate = getTaskDate(existing.pickTime);
+            const newDate = getTaskDate(pickTime);
+
+            if (newDate && (!existingDate || newDate.getTime() < existingDate.getTime())) {
+                existing.pickTime = pickTime;
+            }
+
+        } else {
+
+            merged.set(key, {
+                pax: pax,
+                bin: bin,
+                barcode: barcode,
+                pickTime: pickTime,
+                qty: qty
+            });
+
+        }
+
+    }
+
+    let taskIndex = 0;
+
+    merged.forEach(entry => {
+
+        tasks.push({
+            id: taskIndex,
+            pax: entry.pax,
+            bin: entry.bin,
+            barcode: entry.barcode,
+            pickTime: entry.pickTime,
+            qty: entry.qty,
+            completed: false,
+            actualPickTime: null,
+            outcome: null,
+            shortageQty: null,
+            pickedBy: null,
+            taskKey: entry.pax + "|" + entry.bin + "|" + entry.barcode
+        });
+
+        taskIndex++;
+
+    });
+
+    /*
+       Push the freshly loaded batch to Supabase, then
+       pull back any existing completion state (e.g. if
+       this same file was already loaded on another
+       device) so nothing already picked gets reset.
+    */
+
+    pickerIndex = 0;
+
+    syncTasksToSupabase().then(() => {
+        subscribeToRealtime();
+        renderTable();
+        if (currentRole === "picker") renderPickerView();
+    });
+
+    renderTable();
+    if (currentRole === "picker") renderPickerView();
+
+}
+
+
+function normalizeTime(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    if (typeof value === "number") {
+
+        /*
+           Excel date+time serial number.
+           If it's large (>1) it likely includes a date part.
+        */
+
+        if (value > 1) {
+
+            const excelEpoch = new Date(1899, 11, 30);
+            const ms = Math.round(value * 24 * 60 * 60 * 1000);
+            const dateObj = new Date(excelEpoch.getTime() + ms);
+
+            return formatDateTimeDisplay(dateObj);
+        }
+
+        const totalMinutes = Math.round(value * 24 * 60);
+        const hours = Math.floor(totalMinutes / 60) % 24;
+        const minutes = totalMinutes % 60;
+
+        return pad(hours) + ":" + pad(minutes);
+    }
+
+    let text = String(value).trim();
+
+    /*
+       Full date + time, e.g. "9/1/2026 23:15" or "9/1/2026 11:15 PM"
+    */
+
+    const fullDateTime = text.match(
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i
+    );
+
+    if (fullDateTime) {
+
+        const month = parseInt(fullDateTime[1]);
+        const day = parseInt(fullDateTime[2]);
+        const year = parseInt(fullDateTime[3]);
+
+        let hour = parseInt(fullDateTime[4]);
+        const minute = fullDateTime[5];
+        const period = fullDateTime[6];
+
+        if (period) {
+
+            const upperPeriod = period.toUpperCase();
+
+            if (upperPeriod === "PM" && hour !== 12) { hour += 12; }
+            if (upperPeriod === "AM" && hour === 12) { hour = 0; }
+        }
+
+        const dateObj = new Date(year, month - 1, day, hour, parseInt(minute), 0, 0);
+
+        return formatDateTimeDisplay(dateObj);
+    }
+
+    const ampm = text.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)$/i);
+
+    if (ampm) {
+
+        let hour = parseInt(ampm[1]);
+        const minute = ampm[2];
+        const period = ampm[4].toUpperCase();
+
+        if (period === "PM" && hour !== 12) { hour += 12; }
+        if (period === "AM" && hour === 12) { hour = 0; }
+
+        return pad(hour) + ":" + minute;
+    }
+
+    const match = text.match(/^(\d{1,2}):(\d{2})/);
+
+    if (match) {
+        return pad(parseInt(match[1])) + ":" + match[2];
+    }
+
+    return text;
+}
+
+
+/* ==========================================
+   FORMAT DATETIME FOR STORAGE/DISPLAY
+   Format used internally: "M/D/YYYY HH:MM"
+   This keeps both the date and time so
+   overnight / multi-day schedules work.
+========================================== */
+
+function formatDateTimeDisplay(dateObj) {
+
+    return (
+        (dateObj.getMonth() + 1) + "/" +
+        dateObj.getDate() + "/" +
+        dateObj.getFullYear() + " " +
+        pad(dateObj.getHours()) + ":" +
+        pad(dateObj.getMinutes())
+    );
+}
+
+
+function pad(number) {
+    return String(number).padStart(2, "0");
+}
+
+
+/* ==========================================
+   GET TASK DATE/TIME
+========================================== */
+
+function getTaskDate(timeString) {
+
+    if (!timeString) { return null; }
+
+    /*
+       Full date + time format: "M/D/YYYY HH:MM"
+    */
+
+    const fullMatch = timeString.match(
+        /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/
+    );
+
+    if (fullMatch) {
+
+        const month = parseInt(fullMatch[1]);
+        const day = parseInt(fullMatch[2]);
+        const year = parseInt(fullMatch[3]);
+        const hour = parseInt(fullMatch[4]);
+        const minute = parseInt(fullMatch[5]);
+
+        return new Date(year, month - 1, day, hour, minute, 0, 0);
+    }
+
+    /*
+       Plain "HH:MM" -> assume today's date.
+    */
+
+    const parts = timeString.split(":");
+
+    if (parts.length < 2) { return null; }
+
+    const target = new Date();
+
+    target.setHours(parseInt(parts[0]), parseInt(parts[1]), 0, 0);
+
+    return target;
+}
+
+
+/* ==========================================
+   GET STATUS
+========================================== */
+
+function getStatus(task) {
+
+    if (task.completed) {
+        if (task.outcome === "MISSING") { return "MISSING"; }
+        if (task.outcome === "SHORTAGE") { return "SHORTAGE"; }
+        return "COMPLETED";
+    }
+
+    const target = getTaskDate(task.pickTime);
+
+    if (!target) { return "UPCOMING"; }
+
+    const now = new Date();
+    const difference = target.getTime() - now.getTime();
+    const minutes = difference / 60000;
+
+    if (difference < 0) { return "OVERDUE"; }
+    if (minutes <= 10) { return "URGENT"; }
+    if (minutes <= 20) { return "SOON"; }
+
+    return "UPCOMING";
+}
+
+
+/* ==========================================
+   TIME REMAINING
+========================================== */
+
+function getRemaining(task) {
+
+    if (task.completed) { return "PICKED"; }
+
+    const target = getTaskDate(task.pickTime);
+
+    if (!target) { return "--"; }
+
+    const now = new Date();
+    let diff = target.getTime() - now.getTime();
+
+    if (diff < 0) {
+        diff = Math.abs(diff);
+        return "-" + formatDuration(diff);
+    }
+
+    return formatDuration(diff);
+}
+
+
+function formatDuration(milliseconds) {
+
+    let seconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(seconds / 3600);
+    seconds %= 3600;
+    const minutes = Math.floor(seconds / 60);
+    seconds %= 60;
+
+    if (hours > 0) {
+        return pad(hours) + ":" + pad(minutes) + ":" + pad(seconds);
+    }
+
+    return pad(minutes) + ":" + pad(seconds);
+}
+
+
+/* ==========================================
+   STATUS BADGE
+========================================== */
+
+function statusBadge(status) {
+
+    switch(status) {
+        case "URGENT": return `<span class="badge badge-urgent">🔴 URGENT</span>`;
+        case "SOON": return `<span class="badge badge-soon">🟠 DUE SOON</span>`;
+        case "UPCOMING": return `<span class="badge badge-upcoming">🟡 UPCOMING</span>`;
+        case "OVERDUE": return `<span class="badge badge-overdue">⚠️ OVERDUE</span>`;
+        case "COMPLETED": return `<span class="badge badge-completed">✅ COMPLETED</span>`;
+        case "MISSING": return `<span class="badge badge-missing">❓ MISSING</span>`;
+        case "SHORTAGE": return `<span class="badge badge-shortage">⚠️ SHORTAGE</span>`;
+    }
+}
+
+
+/* ==========================================
+   RENDER TABLE (ADMIN)
+========================================== */
+
+function renderTable() {
+
+    const table = document.getElementById("taskTable");
+    const search = document.getElementById("search").value.toLowerCase();
+    const filter = document.getElementById("statusFilter").value;
+
+    const prepared = tasks.map(task => ({ task: task, status: getStatus(task) }));
+
+    const priority = { OVERDUE: 1, URGENT: 2, SOON: 3, UPCOMING: 4, COMPLETED: 5 };
+
+    prepared.sort((a,b) => {
+        if (priority[a.status] !== priority[b.status]) {
+            return priority[a.status] - priority[b.status];
+        }
+        return compareByTimeOrBin(a.task, b.task);
+    });
+
+    const filtered = prepared.filter(item => {
+
+        const task = item.task;
+        const status = item.status;
+
+        const searchText = (task.pax + " " + task.bin + " " + task.barcode).toLowerCase();
+        const matchesSearch = searchText.includes(search);
+        const matchesStatus = filter === "ALL" || status === filter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        table.innerHTML = `<tr><td colspan="10" class="empty">No matching tasks.</td></tr>`;
+        updateStats();
+        return;
+    }
+
+    table.innerHTML = filtered.map((item, index) => {
+
+        const task = item.task;
+        const status = item.status;
+        let rowClass = status.toLowerCase();
+
+        return `
+            <tr class="${rowClass}">
+                <td>${index + 1}</td>
+                <td><b>${escapeHTML(task.pax)}</b></td>
+                <td><b>${escapeHTML(task.bin)}</b></td>
+                <td>${escapeHTML(task.barcode)}</td>
+                <td>${escapeHTML(task.qty || 1)}</td>
+                <td><b>${escapeHTML(task.pickTime)}</b></td>
+                <td><b>${getRemaining(task)}</b></td>
+                <td>${statusBadge(status)}</td>
+                <td>${escapeHTML(task.pickedBy || "--")}</td>
+                <td>
+                    ${task.completed
+                        ? `<button class="undo-btn" onclick="undoTask(${task.id})">↩ Undo</button>`
+                        : `<button class="pick-btn" onclick="completeTask(${task.id})">✅ PICKED</button>`
+                    }
+                </td>
+            </tr>
+        `;
+
+    }).join("");
+
+    updateStats();
+}
+
+
+/* ==========================================
+   RENDER PICKER VIEW
+========================================== */
+
+function getPickerQueue() {
+
+    /*
+       Build the prioritized queue of tasks:
+       not-yet-actioned tasks first (by urgency,
+       then need-by time), completed/actioned
+       tasks pushed to the end.
+    */
+
+    const prepared = tasks.map(task => ({ task: task, status: getStatus(task) }));
+
+    const priority = {
+        OVERDUE: 1,
+        URGENT: 2,
+        SOON: 3,
+        UPCOMING: 4,
+        COMPLETED: 5,
+        MISSING: 5,
+        SHORTAGE: 5
+    };
+
+    prepared.sort((a,b) => {
+        if (priority[a.status] !== priority[b.status]) {
+            return priority[a.status] - priority[b.status];
+        }
+        return compareByTimeOrBin(a.task, b.task);
+    });
+
+    return prepared;
+}
+
+
+function renderPickerView() {
+
+    const container = document.getElementById("pickerCards");
+    const positionLabel = document.getElementById("pickerPosition");
+    const shortageLabel = document.getElementById("shortageTotal");
+
+    if (shortageLabel) {
+
+        const shortageTasks = tasks.filter(x => x.outcome === "SHORTAGE");
+
+        const shortageCount = shortageTasks.length;
+
+        const shortageUnits = shortageTasks.reduce(
+            (sum, t) => sum + (t.shortageQty || 0),
+            0
+        );
+
+        shortageLabel.textContent = shortageCount;
+
+        const unitsLabel = document.getElementById("shortageUnitsTotal");
+        if (unitsLabel) { unitsLabel.textContent = shortageUnits; }
+    }
+
+    if (tasks.length === 0) {
+        container.innerHTML = `<div class="empty">No tasks loaded yet. Ask your admin to upload the replenishment file.</div>`;
+        positionLabel.textContent = "0 / 0";
+        return;
+    }
+
+    const queue = getPickerQueue();
+
+    const remaining = queue.filter(item => !item.task.completed);
+
+    if (remaining.length === 0) {
+
+        container.innerHTML = `
+            <div class="picker-card completed" style="text-align:center;">
+                <div style="font-size:50px; margin-bottom:10px;">🎉</div>
+                <div style="font-size:22px; font-weight:bold; color:#145c20;">No more work!</div>
+                <div style="margin-top:8px; color:#555;">All ${queue.length} tasks have been actioned. Nice job.</div>
+            </div>
+        `;
+
+        positionLabel.textContent = queue.length + " / " + queue.length;
+
+        return;
+    }
+
+    if (pickerIndex < 0) { pickerIndex = 0; }
+    if (pickerIndex >= queue.length) { pickerIndex = queue.length - 1; }
+
+    const item = queue[pickerIndex];
+    const task = item.task;
+    const status = item.status;
+
+    const actionedCount = queue.filter(x => x.task.completed).length;
+    positionLabel.textContent = (actionedCount + 1) + " / " + queue.length;
+
+    container.innerHTML = `
+        <div class="picker-card ${status.toLowerCase()}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="priority-tag">#${pickerIndex + 1} Priority</span>
+                ${statusBadge(status)}
+            </div>
+            <div class="bin">📍 ${escapeHTML(task.bin)}</div>
+            <div>PAX: <b>${escapeHTML(task.pax)}</b></div>
+            <div class="barcode">Barcode: <a href="https://fcresearch-eu.aka.amazon.com/DXB5/results?s=${encodeURIComponent(task.barcode)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${escapeHTML(task.barcode)}</a></div>
+            <div>Qty: <b>${escapeHTML(task.qty || 1)}</b></div>
+            <div>Need By: <b>${escapeHTML(task.pickTime)}</b></div>
+            <div class="remaining">⏱ ${getRemaining(task)}</div>
+            <svg class="pax-barcode" id="barcode-${task.id}"></svg>
+            <div class="picker-actions">
+                <button class="picked-btn" onclick="actionTask(${task.id}, 'PICKED')">✅ PICKED</button>
+                <button class="missing-btn" onclick="actionTask(${task.id}, 'MISSING')">❓ MISSING</button>
+                <button class="shortage-btn" onclick="actionTask(${task.id}, 'SHORTAGE')">⚠️ SHORTAGE</button>
+            </div>
+        </div>
+    `;
+
+    if (task.pax) {
+
+        try {
+
+            JsBarcode("#barcode-" + task.id, task.pax, {
+                format: "CODE128",
+                displayValue: true,
+                fontSize: 14,
+                height: 40,
+                margin: 4
+            });
+
+        } catch(error) {
+
+            console.log("Barcode render failed for", task.pax, error);
+
+        }
+
+    }
+
+}
+
+
+function pickerNext() {
+
+    const queue = getPickerQueue();
+
+    if (pickerIndex < queue.length - 1) {
+        pickerIndex++;
+    }
+
+    renderPickerView();
+}
+
+
+function pickerPrev() {
+
+    if (pickerIndex > 0) {
+        pickerIndex--;
+    }
+
+    renderPickerView();
+}
+
+
+/* ==========================================
+   TIME TO MINUTES
+========================================== */
+
+function isP5Bin(bin) {
+
+    return /^P-5-/i.test(String(bin || "").trim());
+}
+
+
+/*
+   Parse a P-5 bin location like "P-5-A218B250" into
+   its walk-path components:
+     - aisle number (218)
+     - shelf level (A/B/C — A = bottom, B = middle, C = top)
+     - bin number along the aisle (250)
+
+   Aisles sit in walkway pairs — a picker standing in the
+   passage between A200/A201 can reach both aisles, then
+   moves on to the A202/A203 passage, etc. So the natural
+   walk order groups aisles by pair (200&201, 202&203, ...),
+   then walks the aisle, then works bottom-to-top on each
+   bin (A, then B, then C).
+*/
+
+function parseP5Bin(bin) {
+
+    const match = String(bin || "").trim().toUpperCase().match(
+        /^P-5-A(\d+)([ABC])(\d+)$/
+    );
+
+    if (!match) { return null; }
+
+    const aisle = parseInt(match[1]);
+    const level = match[2];
+    const binNumber = parseInt(match[3]);
+
+    const levelRank = { A: 0, B: 1, C: 2 }[level];
+
+    /*
+       Aisles pair up at the passage between them:
+       200&201 share a walkway, 202&203 share the next
+       one, and so on — so pair them by flooring to the
+       nearest even aisle number.
+    */
+
+    const pairKey = Math.floor(aisle / 2);
+
+    return { pairKey: pairKey, aisle: aisle, binNumber: binNumber, levelRank: levelRank };
+}
+
+
+function compareByBinWalkPath(taskA, taskB) {
+
+    /*
+       Walk-path order through the aisles — used both
+       as the tie-breaker within a priority/status group
+       (e.g. among several OVERDUE tasks) and as the
+       fallback order when a task has no need-by time
+       at all. Only applies to P-5 locations; other bin
+       prefixes (e.g. dz-...) keep their loaded order.
+    */
+
+    const binA = (taskA.bin || "").toUpperCase();
+    const binB = (taskB.bin || "").toUpperCase();
+
+    const isP5A = isP5Bin(binA);
+    const isP5B = isP5Bin(binB);
+
+    if (isP5A && isP5B) {
+
+        const parsedA = parseP5Bin(binA);
+        const parsedB = parseP5Bin(binB);
+
+        if (parsedA && parsedB) {
+
+            if (parsedA.pairKey !== parsedB.pairKey) {
+                return parsedA.pairKey - parsedB.pairKey;
+            }
+
+            /*
+               Within a walkway pair, interleave both
+               aisles by bin number as the picker walks
+               down — reaching left/right along the way —
+               instead of finishing one aisle before
+               starting the other.
+            */
+
+            if (parsedA.binNumber !== parsedB.binNumber) {
+                return parsedA.binNumber - parsedB.binNumber;
+            }
+
+            if (parsedA.aisle !== parsedB.aisle) {
+                return parsedA.aisle - parsedB.aisle;
+            }
+
+            return parsedA.levelRank - parsedB.levelRank;
+        }
+
+        /*
+           Fall back to plain text compare if either
+           bin doesn't match the expected pattern.
+        */
+
+        return binA.localeCompare(binB);
+    }
+
+    if (isP5A !== isP5B) {
+        /*
+           Keep P-5 bins ahead of non P-5 bins when
+           mixed within the same tie-break group.
+        */
+        return isP5A ? -1 : 1;
+    }
+
+    /*
+       Non P-5 bins (both sides) are left in their
+       original loaded order.
+    */
+
+    return taskA.id - taskB.id;
+}
+
+
+function compareByTimeOrBin(taskA, taskB) {
+
+    /*
+       Walk-path bin order is now the primary
+       tie-breaker, applied within a priority/status
+       group regardless of whether tasks have a
+       need-by time — so OVERDUE/URGENT/etc. items
+       still walk the aisles in the correct order
+       instead of just going by raw timestamp.
+    */
+
+    const hasTimeA = !!getTaskDate(taskA.pickTime);
+    const hasTimeB = !!getTaskDate(taskB.pickTime);
+
+    if (hasTimeA !== hasTimeB) {
+        /*
+           Tasks with a real need-by time are still
+           prioritized ahead of ones without.
+        */
+        return hasTimeA ? -1 : 1;
+    }
+
+    return compareByBinWalkPath(taskA, taskB);
+}
+
+
+function timeToMinutes(time) {
+
+    if (!time) { return 99999999; }
+
+    const target = getTaskDate(time);
+
+    if (!target) { return 99999999; }
+
+    return target.getTime();
+}
+
+
+/* ==========================================
+   COMPLETE / UNDO TASK
+========================================== */
+
+function completeTask(id) {
+
+    actionTask(id, "PICKED");
+}
+
+
+function undoTask(id) {
+
+    const task = tasks.find(x => x.id === id);
+    if (!task) { return; }
+
+    task.completed = false;
+    task.actualPickTime = null;
+    task.outcome = null;
+    task.shortageQty = null;
+    task.pickedBy = null;
+
+    saveCompleted();
+    renderTable();
+    if (currentRole === "picker") renderPickerView();
+}
+
+
+/* ==========================================
+   ACTION TASK (Picker: PICKED / MISSING / SHORTAGE)
+========================================== */
+
+let pendingShortageTaskId = null;
+
+
+function actionTask(id, outcome) {
+
+    if (outcome === "SHORTAGE") {
+
+        /*
+           Open the modal to collect the unit
+           quantity instead of completing right away.
+        */
+
+        openShortageModal(id);
+        return;
+    }
+
+    const task = tasks.find(x => x.id === id);
+
+    if (!task || task.completed) {
+        /*
+           Tap registered but nothing got picked — either
+           no matching task was found, or it was already
+           actioned (e.g. a double-tap). Play a distinct
+           error buzz so the picker knows it didn't work.
+        */
+        playActionBeep("ERROR");
+        return;
+    }
+
+    const now = new Date();
+
+    task.completed = true;
+    task.outcome = outcome;
+    task.actualPickTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    task.pickedBy = currentRole === "picker" ? (pickerName || "Unknown") : "Admin";
+
+    saveCompleted();
+    renderTable();
+
+    if (currentRole === "picker") {
+
+        playActionBeep(outcome);
+
+        /*
+           Do NOT advance pickerIndex here — the
+           queue re-sorts after every action (this
+           task just moved to the bottom), so the
+           next un-actioned task automatically
+           slides into the same slot. Advancing on
+           top of that would skip a task.
+        */
+
+        renderPickerView();
+    }
+}
+
+
+/* ==========================================
+   ACTION SOUND NOTIFICATION
+   Plays a short beep using the Web Audio API
+   (no external sound file needed) whenever a
+   picker logs PICKED / MISSING / SHORTAGE.
+========================================== */
+
+let audioCtx = null;
+
+function playActionBeep(outcome) {
+
+    try {
+
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (outcome === "ERROR") {
+            /*
+               Distinct low double-buzz so it's clearly
+               different from a successful action tone —
+               plays when a tap didn't actually pick anything.
+            */
+            playTone(220, 0.15, 0);
+            playTone(180, 0.2, 0.17);
+            return;
+        }
+
+        const frequencies = {
+            PICKED: 880,
+            MISSING: 440,
+            SHORTAGE: 550
+        };
+
+        const freq = frequencies[outcome] || 700;
+
+        playTone(freq, 0.25, 0);
+
+    } catch(error) {
+        console.log("Beep failed", error);
+    }
+}
+
+
+function playTone(freq, duration, delay) {
+
+    const startTime = audioCtx.currentTime + delay;
+
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = freq;
+
+    gainNode.gain.setValueAtTime(0.2, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration);
+}
+
+
+/* ==========================================
+   SHORTAGE MODAL
+========================================== */
+
+function openShortageModal(id) {
+
+    const task = tasks.find(x => x.id === id);
+    if (!task) { return; }
+
+    pendingShortageTaskId = id;
+
+    document.getElementById("shortageModalBin").textContent = task.bin || task.pax;
+    document.getElementById("shortageQtyInput").value = "";
+
+    document.getElementById("shortageModal").classList.remove("hidden");
+
+    document.getElementById("shortageQtyInput").focus();
+}
+
+
+function closeShortageModal() {
+
+    pendingShortageTaskId = null;
+
+    document.getElementById("shortageModal").classList.add("hidden");
+}
+
+
+function confirmShortage() {
+
+    if (pendingShortageTaskId === null) { return; }
+
+    const qtyInput = document.getElementById("shortageQtyInput");
+    const qty = parseInt(qtyInput.value);
+
+    if (!qty || qty <= 0) {
+        alert("Please enter a valid number of units short.");
+        return;
+    }
+
+    const task = tasks.find(x => x.id === pendingShortageTaskId);
+    if (!task) { return; }
+
+    const now = new Date();
+
+    task.completed = true;
+    task.outcome = "SHORTAGE";
+    task.shortageQty = qty;
+    task.actualPickTime = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    task.pickedBy = currentRole === "picker" ? (pickerName || "Unknown") : "Admin";
+
+    saveCompleted();
+    renderTable();
+
+    document.getElementById("shortageModal").classList.add("hidden");
+    pendingShortageTaskId = null;
+
+    if (currentRole === "picker") {
+        playActionBeep("SHORTAGE");
+        renderPickerView();
+    }
+}
+
+
+/* ==========================================
+   SUPABASE SYNC HELPERS
+========================================== */
+
+function taskKey(task) {
+    return (task.pax || "") + "|" + (task.bin || "") + "|" + (task.barcode || "");
+}
+
+
+function taskToRow(task) {
+    return {
+        task_key: taskKey(task),
+        pax: task.pax,
+        bin: task.bin,
+        barcode: task.barcode,
+        pick_time: task.pickTime,
+        qty: task.qty,
+        completed: task.completed,
+        actual_pick_time: task.actualPickTime,
+        outcome: task.outcome,
+        shortage_qty: task.shortageQty,
+        picked_by: task.pickedBy
+    };
+}
+
+
+async function syncTasksToSupabase() {
+
+    tasks.forEach(t => { t.taskKey = taskKey(t); });
+
+    const keys = tasks.map(t => t.taskKey);
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("tasks")
+            .select("*")
+            .in("task_key", keys);
+
+        if (!error && data) {
+
+            data.forEach(row => {
+
+                const match = tasks.find(x => x.taskKey === row.task_key);
+
+                if (match) {
+                    match.completed = row.completed;
+                    match.actualPickTime = row.actual_pick_time;
+                    match.outcome = row.outcome;
+                    match.shortageQty = row.shortage_qty;
+                    match.pickedBy = row.picked_by;
+                }
+
+            });
+        }
+
+    } catch(error) {
+        console.log("Supabase pull failed", error);
+    }
+
+    await pushAllTasksToSupabase();
+}
+
+
+async function pushAllTasksToSupabase() {
+
+    if (tasks.length === 0) { return; }
+
+    supabaseSyncing = true;
+
+    try {
+
+        const rows = tasks.map(taskToRow);
+
+        await supabaseClient.from("tasks").upsert(rows, { onConflict: "task_key" });
+
+    } catch(error) {
+        console.log("Supabase push failed", error);
+    }
+
+    supabaseSyncing = false;
+}
+
+
+async function pushSingleTaskToSupabase(task) {
+
+    supabaseSyncing = true;
+
+    try {
+
+        await supabaseClient
+            .from("tasks")
+            .upsert([taskToRow(task)], { onConflict: "task_key" });
+
+    } catch(error) {
+        console.log("Supabase push failed", error);
+    }
+
+    supabaseSyncing = false;
+}
+
+
+function subscribeToRealtime() {
+
+    if (realtimeChannel) {
+        supabaseClient.removeChannel(realtimeChannel);
+    }
+
+    realtimeChannel = supabaseClient
+        .channel("tasks-changes")
+        .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, payload => {
+
+            const row = payload.new;
+            if (!row) { return; }
+
+            const match = tasks.find(x => x.taskKey === row.task_key);
+
+            if (match) {
+
+                match.completed = row.completed;
+                match.actualPickTime = row.actual_pick_time;
+                match.outcome = row.outcome;
+                match.shortageQty = row.shortage_qty;
+                match.pickedBy = row.picked_by;
+
+                renderTable();
+                if (currentRole === "picker") { renderPickerView(); }
+            }
+
+        })
+        .subscribe();
+}
+
+
+/* ==========================================
+   SAVE COMPLETED TASKS
+   (Saves to localStorage as an offline backup
+   AND syncs the change to Supabase so every
+   device stays up to date.)
+========================================== */
+
+function saveCompleted() {
+
+    const completed = tasks.filter(x => x.completed).map(x => ({
+        id: x.id,
+        pax: x.pax,
+        barcode: x.barcode,
+        actualPickTime: x.actualPickTime,
+        outcome: x.outcome,
+        shortageQty: x.shortageQty,
+        pickedBy: x.pickedBy,
+        qty: x.qty
+    }));
+
+    localStorage.setItem("replenishmentCompleted", JSON.stringify(completed));
+
+    pushAllTasksToSupabase();
+}
+
+
+/* ==========================================
+   UPDATE STATISTICS
+========================================== */
+
+function updateStats() {
+
+    let urgent = 0, soon = 0, upcoming = 0, overdue = 0, completed = 0;
+
+    tasks.forEach(task => {
+
+        const status = getStatus(task);
+
+        switch(status) {
+            case "URGENT": urgent++; break;
+            case "SOON": soon++; break;
+            case "UPCOMING": upcoming++; break;
+            case "OVERDUE": overdue++; break;
+            case "COMPLETED":
+            case "MISSING":
+            case "SHORTAGE":
+                completed++;
+                break;
+        }
+
+    });
+
+    document.getElementById("urgentCount").textContent = urgent;
+    document.getElementById("soonCount").textContent = soon;
+    document.getElementById("upcomingCount").textContent = upcoming;
+    document.getElementById("overdueCount").textContent = overdue;
+    document.getElementById("completedCount").textContent = completed;
+}
+
+
+/* ==========================================
+   LIVE CLOCK
+========================================== */
+
+function updateClock() {
+
+    const now = new Date();
+    document.getElementById("clock").textContent = now.toLocaleTimeString();
+
+    if (tasks.length > 0) {
+        if (currentRole === "admin") {
+            renderTable();
+        } else {
+            renderPickerView();
+        }
+    }
+}
+
+setInterval(updateClock, 1000);
+
+
+/* ==========================================
+   CLEAR
+========================================== */
+
+async function clearAll() {
+
+    if (!confirm("Clear the current replenishment list? This also clears it from Supabase for all devices.")) { return; }
+
+    try {
+        await supabaseClient.from("tasks").delete().neq("task_key", "");
+    } catch(error) {
+        console.log("Supabase clear failed", error);
+    }
+
+    tasks = [];
+    pickerIndex = 0;
+    localStorage.removeItem("replenishmentCompleted");
+
+    document.getElementById("fileInput").value = "";
+    document.getElementById("fileStatus").textContent = "";
+
+    renderTable();
+    if (currentRole === "picker") renderPickerView();
+}
+
+
+/* ==========================================
+   DOWNLOAD RESULTS CSV
+========================================== */
+
+function downloadResults() {
+
+    if (tasks.length === 0) {
+        alert("No tasks loaded yet.");
+        return;
+    }
+
+    const header = [
+        "scannableId",
+        "outermostScannableId",
+        "asin",
+        "qty",
+        "needByDate",
+        "status",
+        "outcome",
+        "shortageQty",
+        "pickedBy",
+        "actionTime"
+    ];
+
+    const rows = tasks.map(task => {
+
+        const status = getStatus(task);
+
+        const outcome = task.completed
+            ? (task.outcome || "PICKED")
+            : "PENDING";
+
+        return [
+            task.pax,
+            task.bin,
+            task.barcode,
+            task.qty || 1,
+            task.pickTime,
+            status,
+            outcome,
+            task.outcome === "SHORTAGE" ? (task.shortageQty || "") : "",
+            task.pickedBy || "",
+            task.actualPickTime || ""
+        ];
+
+    });
+
+    const csvLines = [header].concat(rows).map(row => {
+
+        return row.map(value => {
+
+            const text = String(value === null || value === undefined ? "" : value);
+
+            /*
+               Quote any value containing a comma, quote,
+               or newline so the CSV stays valid.
+            */
+
+            if (/[",\n]/.test(text)) {
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+
+            return text;
+
+        }).join(",");
+
+    });
+
+    const csvContent = csvLines.join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const now = new Date();
+
+    const stamp =
+        now.getFullYear() + "-" +
+        pad(now.getMonth() + 1) + "-" +
+        pad(now.getDate()) + "_" +
+        pad(now.getHours()) + "-" +
+        pad(now.getMinutes());
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "replenishment_results_" + stamp + ".csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+}
+
+
+/* ==========================================
+   HTML SECURITY
+========================================== */
+
+function escapeHTML(value) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ==========================================
+   INITIALIZE
+========================================== */
+
+updateClock();
+
+/*
+   On page load, default role is admin but locked —
+   show the PIN box instead of the dashboard.
+*/
+document.getElementById("adminLockBox").classList.remove("hidden");
+document.getElementById("adminView").classList.add("hidden");
+
+/*
+   Pull any existing tasks already stored in Supabase
+   (e.g. uploaded earlier from another device) so this
+   device shows the same list without needing a fresh
+   file upload, then start listening for live changes.
+*/
+
+async function loadTasksFromSupabaseOnStart() {
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("tasks")
+            .select("*")
+            .order("pick_time", { ascending: true });
+
+        if (error || !data || data.length === 0) { return; }
+
+        let taskIndex = 0;
+
+        tasks = data.map(row => ({
+            id: taskIndex++,
+            pax: row.pax,
+            bin: row.bin,
+            barcode: row.barcode,
+            pickTime: row.pick_time,
+            qty: row.qty,
+            completed: row.completed,
+            actualPickTime: row.actual_pick_time,
+            outcome: row.outcome,
+            shortageQty: row.shortage_qty,
+            pickedBy: row.picked_by,
+            taskKey: row.task_key
+        }));
+
+        renderTable();
+        if (currentRole === "picker") { renderPickerView(); }
+
+    } catch(error) {
+        console.log("Initial Supabase load failed", error);
+    }
+
+    subscribeToRealtime();
+}
+
+loadTasksFromSupabaseOnStart();
+
+</script>
+
+</body>
+</html>
